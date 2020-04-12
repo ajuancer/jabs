@@ -235,7 +235,7 @@ footer h4{
   }
 }
 
-@media (max-width: 560px) {
+@media only screen and (max-width: 560px) {
   header{
     direction: none;
     align-items: center;
