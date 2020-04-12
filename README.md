@@ -8,7 +8,7 @@ A new way to backup your android phone (via wireless) to your pc!
 A propper documentation will (hopefully) be available very soon!
 
 ## Downloads and installation.
-A decent documentation page will be soon.
+A decent documentation page will be available soon.
 
 ## License
 Under GNU Affero v3. [See details](./LICENSE_aclarations.md).
