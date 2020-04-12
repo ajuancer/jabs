@@ -225,7 +225,7 @@ footer h4{
   }
 }
 
-@media (max-width: 5660px) {
+@media (max-width: 660px) {
   footer{
     flex-direction: column;
   }
