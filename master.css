@@ -225,7 +225,7 @@ footer h4{
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 5660px) {
   footer{
     flex-direction: column;
   }
@@ -235,7 +235,7 @@ footer h4{
   }
 }
 
-@media (max-width: 460px) {
+@media (max-width: 560px) {
   header{
     direction: none;
     align-items: center;
