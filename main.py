@@ -150,45 +150,47 @@ class Photo(object):
                           sort_keys=True, indent=4)
 
 
-# Scans a given directory searching for .jpg files. (indexing looks like the most time-consuming action)
-# Need to specify the max number of items you want to index.
+# Scans a given directory searching for the given suffixes files. (indexing looks like the most time-consuming action)
+# It's possible to specify max number of items you want to index.
 # Returns an array of Photo-type objects.
-def get_images(original_directory, photos_per_move):
+def get_images(original_directory, suffixes, photos_per_move=None):
     p_count = 0
     images_array = []
     for root, dirs, files in os.walk(original_directory):
         for file in files:
-            if file.endswith(".jpg"):
-                if p_count >= photos_per_move:
-                    break
-                else:
-                    # Save actual file (image) info.
-                    photo = Photo()
-                    photo.directory = root
-                    photo.name = file
-                    d_numbers = os.path.getctime(os.path.join(root, file))
-                    photo.size = os.path.getsize(os.path.join(root, file))
-                    d_numbers = datetime.fromtimestamp(d_numbers).strftime(
-                        '%Y%m%d%H%M%S')  # directory date, in Win the creation.
-                    photo.ddate.covert_continue(d_numbers)
-                    # Exif timestamp
-                    actual_image = Image(open(os.path.join(root, file), 'rb'))
-                    if actual_image.has_exif:
-                        for exif_tag in dir(actual_image):
-                            if exif_tag == 'datetime_original':
-                                # print("this works, you're amazing!")
-                                to_format = actual_image.datetime_original
-                                if isinstance(to_format, str):
-                                    c_numbers = "".join(str(elem) for elem in list(filter(str.isdigit, to_format)))
-                                    photo.cdate.covert_continue(str(c_numbers))
-                    # Title timestamp
-                    t_numbers = list(filter(str.isdigit, file))
-                    if len(t_numbers) == 14:
-                        t_numbers = "".join(str(elem) for elem in t_numbers)
-                        photo.tdate.covert_continue(t_numbers)
-                    # Add object to array.
-                    images_array.append(photo)
-                    p_count += 1
+            for end in suffixes:
+                if file.endswith(end):
+                    if photos_per_move is not None:
+                        if p_count == photos_per_move:
+                            return images_array
+                    else:
+                        # Save actual file (image) info.
+                        photo = Photo()
+                        photo.directory = root
+                        photo.name = file
+                        d_numbers = os.path.getctime(os.path.join(root, file))
+                        photo.size = os.path.getsize(os.path.join(root, file))
+                        d_numbers = datetime.fromtimestamp(d_numbers).strftime(
+                            '%Y%m%d%H%M%S')  # directory date, in Win the creation.
+                        photo.ddate.covert_continue(d_numbers)
+                        # Get Exif timestamp
+                        actual_image = Image(open(os.path.join(root, file), 'rb'))
+                        if actual_image.has_exif:
+                            for exif_tag in dir(actual_image):
+                                if exif_tag == 'datetime_original':
+                                    # print("this works, you're amazing!")
+                                    to_format = actual_image.datetime_original
+                                    if isinstance(to_format, str):
+                                        c_numbers = "".join(str(elem) for elem in list(filter(str.isdigit, to_format)))
+                                        photo.cdate.covert_continue(str(c_numbers))
+                        # Title timestamp
+                        t_numbers = list(filter(str.isdigit, file))
+                        if len(t_numbers) == 14:
+                            t_numbers = "".join(str(elem) for elem in t_numbers)
+                            photo.tdate.covert_continue(t_numbers)
+                        # Add object to array.
+                        images_array.append(photo)
+                        p_count += 1
     return images_array
 
 
@@ -196,7 +198,7 @@ def get_images(original_directory, photos_per_move):
 # The 5555 port is used.
 # The max number of files to be compared also is given.
 # After comparison, they're deleted from the original path.
-def scan_phone_tcp(to_search_path, remote_ip, adb_key_file, max_files):
+def scan_phone_tcp(to_search_path, remote_ip, adb_key_file, max_files=None):
     android_images = []
     with open(adb_key_file) as f:
         priv = f.read()
@@ -205,7 +207,8 @@ def scan_phone_tcp(to_search_path, remote_ip, adb_key_file, max_files):
     if device.connect(rsa_keys=[signer], auth_timeout_s=0.4):
         print(device.available)
         directory_scan = device.list(to_search_path, None, 9000)
-        print(len(directory_scan))
+        if max_files is None:
+            max_files = len(directory_scan)
         for file in directory_scan:
             if os.path.splitext(file.filename.decode('utf-8'))[1] == ".jpg":
                 save = AndroidPhoto()
@@ -328,24 +331,21 @@ android_path = ''
 adbkey_route = ''
 # Dependent-value for function.
 temp_directory = ''
-
 # Origin-backup related paths
 originalPath = ''
-
 # Final-backup related paths.
 # Dependent-value for function.
 bckpPath = ''
 
 # Start of program
-scan_phone_tcp(android_path, phone_ip, adbkey_route, 100)
+scan_phone_tcp(android_path, phone_ip, adbkey_route, max_files=100)
 
 # Prepare files.
-# initImages = get_images(originalPath, 0)
-initImages = get_images(temp_directory, 100)
+initImages = get_images(temp_directory, ['.jpg'], photos_per_move=100)
 
-openData = open(os.path.join(bckpPath, ("data_" + datetime.today().strftime("%d-%m-%Y") + ".json")), "w+",
+openData = open(os.path.join(bckpPath, ("data_" + datetime.today().strftime("%M-%d-%m-%Y") + ".json")), "w+",
                 encoding='utf-8')
-openLog = open(os.path.join(bckpPath, ("log_" + datetime.today().strftime("%d-%m-%Y") + ".txt")), "w+",
+openLog = open(os.path.join(bckpPath, ("log_" + datetime.today().strftime("%M-%d-%m-%Y") + ".txt")), "w+",
                encoding='utf-8')
 
 # Copy photos to backup folder.
@@ -447,13 +447,7 @@ while len(initImages) is not 0:
             openLog.write("Something else needs to be prepared. Hmm... that's strange. #7\n")
             sys.exit()
 
-# Save results obtained. (in development)
+# Save results obtained. Should be done in a much proper way
 for p, movedF in enumerate(movedImages):
     json.dump(movedF[0].toJSON(), openData, ensure_ascii=False, indent=4)  # save when something prints and close app
     json.dump(movedF[1], openData, ensure_ascii=False, indent=4)  # save when something prints and close app
-
-# Test purposes.
-
-#    # /!\ solved(COPY OF FILE WILL BE OMITTED)
-#    # /!\ UPDATE DIRECTORY: Store created (if needed) paths.
-#    # /!\ SHOULD HANDLE COPY ERRORS
