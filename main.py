@@ -204,7 +204,7 @@ def scan_phone_tcp(to_search_path, remote_ip, adb_key_file, max_files=None):
         priv = f.read()
     signer = PythonRSASigner('', priv)
     device = AdbDeviceTcp(remote_ip, 5555, default_timeout_s=16.)
-    if device.connect(rsa_keys=[signer], auth_timeout_s=0.4):
+    if device.connect(rsa_keys=[signer], auth_timeout_s=8.):
         print(device.available)
         directory_scan = device.list(to_search_path, None, 9000)
         if max_files is None:
@@ -325,17 +325,17 @@ def are_equal(original_f, copy_f):
 
 # Defined values.
 # Android-related paths.
-phone_ip = ''
+phone_ip = '192.168.0.13'
 # Last bar is important. Bar position is important.
-android_path = ''
-adbkey_route = ''
+android_path = '/storage/emulated/0/DCIM/Camera'
+adbkey_route = 'C:\\Users\\aljua\\.android\\adbkey.pub'
 # Dependent-value for function.
-temp_directory = ''
+temp_directory = 'E:\\JABS\\temp'
 # Origin-backup related paths
 originalPath = ''
 # Final-backup related paths.
 # Dependent-value for function.
-bckpPath = ''
+bckpPath = 'E:"\\JABS\\backup_system'
 
 # Start of program
 scan_phone_tcp(android_path, phone_ip, adbkey_route, max_files=100)
