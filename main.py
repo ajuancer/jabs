@@ -160,9 +160,8 @@ def get_images(original_directory, suffixes, photos_per_move=None):
         for file in files:
             for end in suffixes:
                 if file.endswith(end):
-                    if photos_per_move is not None:
-                        if p_count == photos_per_move:
-                            return images_array
+                    if photos_per_move is not None and photos_per_move == p_count:
+                        return images_array
                     else:
                         # Save actual file (image) info.
                         photo = Photo()
@@ -204,6 +203,7 @@ def scan_phone_tcp(to_search_path, remote_ip, adb_key_file, max_files=None):
         priv = f.read()
     signer = PythonRSASigner('', priv)
     device = AdbDeviceTcp(remote_ip, 5555, default_timeout_s=16.)
+    # device = AdbDeviceTcp(remote_ip, 5555)
     if device.connect(rsa_keys=[signer], auth_timeout_s=8.):
         print(device.available)
         directory_scan = device.list(to_search_path, None, 9000)
@@ -219,7 +219,7 @@ def scan_phone_tcp(to_search_path, remote_ip, adb_key_file, max_files=None):
                 if len(android_images) >= max_files:
                     break
     for image in android_images:
-        move = device.pull(image.path + image.name, dest_file=temp_directory + image.name)
+        move = device.pull(image.path + image.name, temp_directory + image.name, transport_timeout_s=16)
         if move:
             if image.size == os.path.getsize(temp_directory + image.name):
                 device.shell('rm -f ' + to_search_path + image.name)
@@ -351,7 +351,7 @@ openLog = open(os.path.join(bckpPath, ("log_" + datetime.today().strftime("%M-%d
 # Copy photos to backup folder.
 errorImages = []
 movedImages = []
-while len(initImages) is not 0:
+while len(initImages) != 0:
     for i, element in enumerate(initImages):
         directoryStatus = search_directory(map_directory(bckpPath), str(element.get_year()), str(element.get_month()),
                                            str(element.get_day()))
