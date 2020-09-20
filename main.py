@@ -202,8 +202,7 @@ def scan_phone_tcp(to_search_path, remote_ip, adb_key_file, max_files=None):
     with open(adb_key_file) as f:
         priv = f.read()
     signer = PythonRSASigner('', priv)
-    device = AdbDeviceTcp(remote_ip, 5555, default_timeout_s=16.)
-    # device = AdbDeviceTcp(remote_ip, 5555)
+    device = AdbDeviceTcp(remote_ip, 5555, default_transport_timeout_s=16.)
     if device.connect(rsa_keys=[signer], auth_timeout_s=8.):
         print(device.available)
         directory_scan = device.list(to_search_path, None, 9000)
