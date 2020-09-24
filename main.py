@@ -61,7 +61,7 @@ class Date(object):
             self.minute = int(initial_str[10:12])
             self.second = int(initial_str[12:14])
 
-    ##COPY PASTE STACKOVERFLOW
+    # COPY PASTE STACKOVERFLOW
     def to_JSON(self):
         return json.dumps(self, default=lambda o: o.__dict__,
                           sort_keys=True, indent=4)
@@ -150,10 +150,14 @@ class Photo(object):
                           sort_keys=True, indent=4)
 
 
-# Scans a given directory searching for the given suffixes files. (indexing looks like the most time-consuming action)
-# It's possible to specify max number of items you want to index.
-# Returns an array of Photo-type objects.
 def get_images(original_directory, suffixes, photos_per_move=None):
+    """
+    Scans a given directory searching for the given suffixes files (indexing looks like the most time-consuming action).
+    :param original_directory: The original path where the images are located.
+    :param suffixes: The suffixes of the files to be moved.
+    :param photos_per_move: Number of files to move.
+    :return: An array of Photo-type objects.
+    """
     p_count = 0
     images_array = []
     for root, dirs, files in os.walk(original_directory):
@@ -193,18 +197,29 @@ def get_images(original_directory, suffixes, photos_per_move=None):
     return images_array
 
 
-# Search in the given directory for .jpg files and copy them to a temporarily folder.
-# The 5555 port is used.
-# The max number of files to be compared also is given.
-# After comparison, they're deleted from the original path.
+def log_pull_status(a, bytes_written=0, total_bytes=0):
+    print(f"\rMoving {os.path.basename(a)} - {round(bytes_written / total_bytes * 100, 1)}%", end="")
+
+
 def scan_phone_tcp(to_search_path, remote_ip, adb_key_file, max_files=None):
+    """
+    Search in the given directory for .jpg files and copy them to a temporarily folder.
+    By default the 5555 port is used.
+    After comparison, they're deleted from the original path.
+    :param to_search_path: The path where the files are located.
+    :param remote_ip: The IP of the device where the files are located.
+    :param adb_key_file: The ADB key of the device to be connected.
+    :param max_files: The number of files to be moved.
+    :return: True
+    """
     android_images = []
     with open(adb_key_file) as f:
         priv = f.read()
     signer = PythonRSASigner('', priv)
-    device = AdbDeviceTcp(remote_ip, 5555, default_transport_timeout_s=16.)
-    if device.connect(rsa_keys=[signer], auth_timeout_s=8.):
-        print(device.available)
+    device = AdbDeviceTcp(remote_ip, 5555, default_transport_timeout_s=100.)
+    if device.connect(rsa_keys=[signer], auth_timeout_s=100.):
+        if device.available:
+            print("Connected to selected device.\n---")
         directory_scan = device.list(to_search_path, None, 9000)
         if max_files is None:
             max_files = len(directory_scan)
@@ -217,18 +232,25 @@ def scan_phone_tcp(to_search_path, remote_ip, adb_key_file, max_files=None):
                 android_images.append(save)
                 if len(android_images) >= max_files:
                     break
+    print(f"There're listed {len(android_images)} files.\n---")
     for image in android_images:
-        move = device.pull(image.path + image.name, temp_directory + image.name, transport_timeout_s=16)
-        if move:
-            if image.size == os.path.getsize(temp_directory + image.name):
-                device.shell('rm -f ' + to_search_path + image.name)
-                print(image.name, "is now in the temp folder.")
+        device.pull(image.path + image.name, os.path.join(temp_directory, image.name),
+                    progress_callback=log_pull_status,
+                    transport_timeout_s=100, read_timeout_s=100)
+        if image.size == os.path.getsize(os.path.join(temp_directory, image.name)):
+            device.shell('rm -f ' + to_search_path + image.name)
+            print("\r\r" + image.name + " is now in the temp folder.")
+    print("---\nAll files are now in the temp folder.\n---")
+    return True
 
 
-# Map the backup directory.
-# Scan a given directory for subfolders in the defined backup structure.
-# Returns an  array
 def map_directory(home_path):
+    """
+    Map the backup directory.
+    Scan a given directory for subfolders in the defined backup structure.
+    :param home_path: the path to map.
+    :return: (complex) Array
+    """
     to_index = None
     for dirpath, dirnames, filenames in os.walk(home_path):
         if dirnames != []:
@@ -260,9 +282,15 @@ def map_directory(home_path):
     return to_index
 
 
-# Search for the existing Y, M and D folders.
-# Returns [year, month, day, index, index, index]
 def search_directory(indexed_path, find_y, find_m, find_d):
+    """
+    Search for the existing Y, M and D folders.
+    :param indexed_path: (complex) Array
+    :param find_y: The year to find
+    :param find_m: The month to find
+    :param find_d: The day to find
+    :return: Array [year, month, day, index, index, index]
+    """
     is_year = False
     is_month = False
     is_day = False
@@ -297,11 +325,13 @@ def search_directory(indexed_path, find_y, find_m, find_d):
     return [is_year, is_month, is_day, index_y, index_m, index_d]
 
 
-# Checks for differences in two files.
-# origin_f should be a Photo type object.
-# copy_f is the final route of the file
-# Returns an array of Booleans
 def are_equal(original_f, copy_f):
+    """
+     Checks for differences in two files.
+    :param original_f: should be a Photo type object.
+    :param copy_f: is the final route of the file
+    :return: Array of Booleans
+    """
     equal_size = False
     if original_f.size == os.path.getsize(copy_f):
         equal_size = True
@@ -324,18 +354,18 @@ def are_equal(original_f, copy_f):
 
 # Defined values.
 # Android-related paths.
-phone_ip = '192.168.0.13'
+phone_ip = '192.168.0.00'
 # Last bar is important. Bar position is important.
-android_path = '/storage/emulated/0/DCIM/Camera'
-adbkey_route = 'C:\\Users\\aljua\\.android\\adbkey.pub'
+android_path = '/phone/path/to/imgs/location/'
+adbkey_route = r'path\to\the\adbkey'
 # Dependent-value for function.
-temp_directory = 'E:\\JABS\\temp'
-# Origin-backup related paths
-originalPath = ''
+temp_directory = r'path\of\temp\folder'
 # Final-backup related paths.
 # Dependent-value for function.
-bckpPath = 'E:"\\JABS\\backup_system'
+bckpPath = r'path\of\backup\folder'
 
+print("---\nJABS, an open source backup system developed by Juan Cerdeño. Learn more at "
+      "https://www.github.com/ajuancer/jabs.\n---")
 # Start of program
 scan_phone_tcp(android_path, phone_ip, adbkey_route, max_files=100)
 
@@ -350,6 +380,7 @@ openLog = open(os.path.join(bckpPath, ("log_" + datetime.today().strftime("%M-%d
 # Copy photos to backup folder.
 errorImages = []
 movedImages = []
+print("Organizing files (moving imgs to final location).\n---")
 while len(initImages) != 0:
     for i, element in enumerate(initImages):
         directoryStatus = search_directory(map_directory(bckpPath), str(element.get_year()), str(element.get_month()),
