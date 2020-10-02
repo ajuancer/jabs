@@ -1,7 +1,9 @@
+import argparse
 import filecmp
 import json
 import os
 import random
+import re
 import shutil
 import sys
 from datetime import datetime
@@ -9,6 +11,61 @@ from datetime import datetime
 from adb_shell.adb_device import AdbDeviceTcp
 from adb_shell.auth.sign_pythonrsa import PythonRSASigner
 from exif import Image
+
+
+class Error(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
+def validate_ip_form(ip_string):
+    if not re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$').match(ip_string):
+        raise argparse.ArgumentTypeError
+    return ip_string
+
+
+use_profile = False
+backup_parser = None
+
+if not use_profile:
+    backup_parser = argparse.ArgumentParser(description='Performs the backup of a specific phone directory to another '
+                                                        'specified directory.')
+    backup_parser.add_argument('phone_ip', help='the IP of the device from which get the files to backup.',
+                               type=validate_ip_form, metavar='phone_IP')
+    backup_parser.add_argument('adb_key', help='the path were the ADB key of the specific Android device is stored.',
+                               metavar='ADB_key', type=str)
+    backup_parser.add_argument('backup_dir', help='the backup path of the folder in which the backup will be done.',
+                               type=str, metavar='backup_folder')
+    backup_parser.add_argument('phone_dir', help='the original directory where the images to backup are stored.',
+                               type=str, metavar='phone_folder')
+    backup_parser.add_argument('--temp_dir', help='the temp directory in which the incoming images of the '
+                                                  'device will be stored.', type=str)
+    backup_parser.add_argument('--max_android_files', help='specify the maximum number of files to backup.',
+                               type=int)
+
+args = backup_parser.parse_args()
+
+# Defined values.
+# Android-related paths.
+phone_ip = args.phone_ip
+adbkey_route = args.adb_key.replace("/", "\\")
+# Last bar is important. Bar position is important.
+android_path = args.phone_dir.replace("\\", "/")
+# Final-backup related paths.
+max_android_files = args.max_android_files or None
+# Dependent-value for function.
+bckpPath = args.backup_dir.replace("/", "\\")
+# Dependent-value for function.
+if args.temp_dir:
+    temp_directory = args.temp_dir.replace("/", "\\")
+else:
+    temp_directory = os.path.join(os.path.split(bckpPath)[0], 'jabs_tmp')
+# Check and prepare paths.
+if not os.path.exists(adbkey_route):
+    raise Error("The specified ADB key was not found.")
+for path in [bckpPath, temp_directory]:
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
 # Date object for images.
@@ -353,22 +410,10 @@ def are_equal(original_f, copy_f):
         return [False, equal_size, py_compares, equal_exif]
 
 
-# Defined values.
-# Android-related paths.
-phone_ip = '192.168.0.00'
-# Last bar is important. Bar position is important.
-android_path = '/phone/path/to/imgs/location/'
-adbkey_route = r'path\to\the\adbkey'
-# Dependent-value for function.
-temp_directory = r'path\of\temp\folder'
-# Final-backup related paths.
-# Dependent-value for function.
-bckpPath = r'path\of\backup\folder'
-
 print("---\nJABS, an open source backup system developed by Juan Cerdeño. Learn more at "
       "https://www.github.com/ajuancer/jabs.\n---")
 # Start of program
-scan_phone_tcp(android_path, phone_ip, adbkey_route, max_files=100)
+scan_phone_tcp(android_path, phone_ip, adbkey_route, max_files=max_android_files)
 
 # Prepare files.
 initImages = get_images(temp_directory, ['.jpg'], photos_per_move=100)
@@ -482,3 +527,5 @@ while len(initImages) != 0:
 for p, movedF in enumerate(movedImages):
     json.dump(movedF[0].toJSON(), openData, ensure_ascii=False, indent=4)  # save when something prints and close app
     json.dump(movedF[1], openData, ensure_ascii=False, indent=4)  # save when something prints and close app
+
+print(f"---\nAll done! Navigate to {bckpPath} and see the results.")
