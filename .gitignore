@@ -1,5 +1,10 @@
-/venv2/
-/venv/
+# Pycharm
+venv2
+venv
+.idea
+__pycache__
+
+# Specific files
 test.JPG
 test_v.mp4
 test.py
