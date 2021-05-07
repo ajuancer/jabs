@@ -5,5 +5,5 @@ exif==1.0.1
 plum-py==0.4.0
 pyasn1==0.4.8
 pycparser==2.20
-rsa==4.6
+rsa==4.7
 six==1.15.0
