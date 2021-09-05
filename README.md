@@ -35,7 +35,7 @@ _Note 2_: If your Android version is 11 or higher, you can follow different step
 Now you just need to specify some parameters:
 
 1. The IP of your phone. Usually it is detailed in the Wifi settings. It follows the following pattern: `192.168.x.jj`, where the `x` is commonly a `0` and `jj` a two-digit number.
-2. The path to where the ADB key you generated in [step #2](#2. Prepare your phone.) is located. This file works just like in a lock, allowing the computer to connect to your phone. Please keep it private.
+2. The path to where the ADB key you generated in [step #2](#2-prepare-your-phone) is located. This file works just like in a lock, allowing the computer to connect to your phone. Please keep it private.
 3. The path to the root dir of your backup folder (where you want your files to be saved). For example, if you want to save them is an external drive `E:`, on the folder `android_backup`, your backup path is `E:/android_backup`.
 4. The path of the folder you want to backup. This is the folder of the android device. You need to specify the absolute path, so it should start with a slash (**`/`**`some/path/`). You can get this path using any file explorer of your device. A common path to the camera folder is `/storage/emulated/0/DCIM/Camera/`.
 
@@ -44,7 +44,7 @@ Now you just need to specify some parameters:
 1. Get the necessary libraries with `pip install requeriments.txt`.
 2. Run the [`main.py`](main.py) file. If you need help, try with `py main.py -h`.
 
-_Help:_ If you have followed the [previous step](#3. Get the paths.), you just need to open a console in the directory where the `main.py` file is and write `py main.py phone_IP ADB_key backup_folder phone_folder`, but replacing `phone_IP` with what you obtained in step 3.1, `ADB_key` with 3.2, `backup_folder` with 3.3 and `phone_folder` with 3.4.
+_Help:_ If you have followed the [previous step](#3-get-the-paths), you just need to open a console in the directory where the `main.py` file is and write `py main.py phone_IP ADB_key backup_folder phone_folder`, but replacing `phone_IP` with what you obtained in step 3.1, `ADB_key` with 3.2, `backup_folder` with 3.3 and `phone_folder` with 3.4.
 
 ## I want to help!
 Although no documentation is written, you can fork this project and made the changes you want. You can also open an issue suggesting any kind of implementation. If you have any problem, you can always [contact me](https://ajuancer.github.io).
