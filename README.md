@@ -1,4 +1,5 @@
-# JABS
+# ![JABS](docs/logo_v1.png)
+
 A new way to backup your android phone (via wireless) to your pc!
 
 ## What is?
