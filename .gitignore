@@ -1,10 +1,7 @@
 # Pycharm
-venv2
-venv
+venv*
 .idea
 __pycache__
-venv3
 # Specific files
-test.JPG
-test_v.mp4
-test.py
+test*
+docs
